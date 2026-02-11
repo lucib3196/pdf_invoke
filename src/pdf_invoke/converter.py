@@ -49,6 +49,58 @@ class PDFImageConverter:
         doc.close()
         return pdf_bytes
 
+    def save_pdf_to_images(
+        self,
+        pdf: PDFInput,
+        output_path: str | Path,
+        pdf_name: str | None = None,
+        ext: ImageExt = "png",
+        start: int = 0,
+    ) -> str:
+        pdf_name = self._validate_pdf_name(pdf, pdf_name)
+        output_path = self._validate_path(output_path)
+        data = self.pdf_to_images(pdf)
+        for i, b in enumerate(data, start=start):
+            out = output_path / f"{pdf_name}_page_{i}.{ext}"
+            out.write_bytes(b)
+        return output_path.as_posix()
+
+    def save_images_to_pdf(
+        self,
+        images: Iterable[bytes],
+        output_path: str | Path,
+        pdf_name: str,
+    ) -> str:
+        pdf_name = self._validate_pdf_name(name=pdf_name)
+        output_path = self._validate_path(output_path)
+        pdf_path = output_path / pdf_name
+
+        if pdf_path.suffix.lower() != ".png":
+            pdf_path = pdf_path.with_suffix(".png")
+
+        pdf_bytes = self.images_to_pdf(images)
+
+        pdf_path.write_bytes(pdf_bytes)
+        return pdf_path.as_posix()
+
+    def _validate_pdf_name(
+        self,
+        pdf: PDFInput | None = None,
+        name: str | None = None,
+    ) -> str:
+
+        if isinstance(pdf, (str, Path)):
+            return Path(pdf).stem
+
+        if name is not None:
+            return name
+
+        raise ValueError(
+            "Unable to determine PDF name. "
+            "Provide either a file path (str or Path) or explicitly pass `name` "
+            "when supplying raw PDF bytes."
+        )
+
     def _validate_pdf_bytes(self, data):
         if not is_pdf_bytes(data):
             raise ValueError("Document is not pdf")
@@ -71,6 +123,12 @@ class PDFImageConverter:
             except Exception as e:
                 raise ValueError(f"Invalid image at index {idx}: {e}") from e
         return formats
+
+    def _validate_path(self, path: str | Path) -> Path:
+        path = Path(path)
+        if not path.exists():
+            raise ValueError(f"Failed to validate pdf {path} cannot be resolved")
+        return path
 
 
 if __name__ == "__main__":
