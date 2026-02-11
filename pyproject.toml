@@ -1,6 +1,6 @@
 [project]
 name = "pdf-invoke"
-version = "0.1.0"
+version = "0.1.1"
 description = "A LLM utility for working with pdfs"
 authors = [
     {name = "Luciano Bermudez",email = "lberm007@ucr.edu"}
@@ -15,7 +15,8 @@ dependencies = [
     "langchain (>=1.2.10,<2.0.0)",
     "dotenv (>=0.9.9,<0.10.0)"
 ]
-
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
