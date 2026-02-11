@@ -1,11 +1,11 @@
 from base64 import b64encode
-from typing import Iterable, Literal, Optional, Sequence, Type
-
+from typing import Iterable, Optional, Sequence, Type
+from pathlib import Path
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel
 
 from pdf_invoke.converter import PDFImageConverter
-from pdf_invoke.types import PDFInput, ALLOWED_MIME
+from pdf_invoke.types import PDFInput, ALLOWED_MIME, ImageInput
 from pdf_invoke.utils import validate_image_bytes
 
 
@@ -20,22 +20,29 @@ class MultiModalLLM:
         prompt: str,
         model: BaseChatModel,
         pdf: PDFInput | None = None,
-        image_bytes: Sequence[bytes] | None = None,
+        images: Sequence[ImageInput] | None = None,
     ):
         # Base configuration
         self.prompt = prompt
         self.llm = model
+        self.image_bytes = self._validate_input(pdf, images)
 
-        if pdf is None and image_bytes is None:
+    def _validate_input(
+        self,
+        pdf: PDFInput | None = None,
+        images: Sequence[ImageInput] | None = None,
+    ) -> Sequence[bytes]:
+        # Ensure values are okay
+        if pdf is None and images is None:
             raise ValueError("Either pdfinput or image_bytes must be provided")
-        if pdf is not None and image_bytes is not None:
+        if pdf is not None and images is not None:
             raise ValueError("Provide only one of pdfinput or image_bytes")
 
-        if pdf is not None:
-            self.pdf_bytes = PDFImageConverter().pdf_to_images(pdf)
-
-        elif image_bytes:
-            self.pdf_bytes = list(image_bytes)
+        # Return
+        if pdf:
+            return PDFImageConverter().pdf_to_images(pdf)
+        elif images:
+            return [self._image_to_bytes(i) for i in images]
         else:
             raise RuntimeError("Unexpected Error Occured ")
 
@@ -70,7 +77,7 @@ class MultiModalLLM:
 
     def prepare_payload(self, mime: ALLOWED_MIME = "image/png"):
         try:
-            image_payload = self.prepare_image_payload(self.pdf_bytes, mime=mime)
+            image_payload = self.prepare_image_payload(self.image_bytes, mime=mime)
             message = {
                 "role": "user",
                 "content": [{"type": "text", "text": self.prompt}, *image_payload],
@@ -95,3 +102,16 @@ class MultiModalLLM:
             }
             for p in payload
         ]
+
+    def _image_to_bytes(self, image: ImageInput) -> bytes:
+        try:
+            if isinstance(image, (bytes, memoryview)):
+                return image
+            elif isinstance(image, (str | Path)):
+                return Path(image).read_bytes()
+            else:
+                raise TypeError(
+                    f"Failed to conver image to bytes received incorrect type image is of type {type(image)}"
+                )
+        except Exception as e:
+            raise ValueError(f"Failed to convert image to bytes {e}")
