@@ -7,7 +7,7 @@ from pdf_invoke.types import ImageExt, PDFInput
 from pdf_invoke.utils import get_image_type, is_pdf_bytes, validate_image_bytes
 
 
-class PDFImageArchiver:
+class PDFImageConverter:
     """
     Utility class for converting between PDF documents and image byte streams,
     as well as persisting those conversions to disk.
