@@ -4,7 +4,7 @@ from typing import Iterable, List
 import pymupdf
 
 from pdf_invoke.types import ImageExt, PDFInput
-from pdf_invoke.utils import get_image_type, is_pdf_bytes
+from pdf_invoke.utils import get_image_type, is_pdf_bytes, validate_image_bytes
 
 
 class PDFImageConverter:
@@ -35,7 +35,7 @@ class PDFImageConverter:
     def images_to_pdf(
         self, images: Iterable[bytes], allowed_formats=["png", "jpeg"]
     ) -> bytes:
-        self._validate_image_bytes(images, allowed_formats)
+        validate_image_bytes(images, allowed_formats)
         doc = pymupdf.open()
         for img_bytes in images:
             img_doc = pymupdf.open(stream=img_bytes, filetype=get_image_type(img_bytes))
@@ -104,25 +104,6 @@ class PDFImageConverter:
     def _validate_pdf_bytes(self, data):
         if not is_pdf_bytes(data):
             raise ValueError("Document is not pdf")
-
-    def _validate_image_bytes(
-        self,
-        images: Iterable[bytes],
-        allowed_formats: set[str] | None = None,
-    ) -> List[str]:
-        formats = []
-        for idx, img_bytes in enumerate(images):
-            try:
-                fmt = get_image_type(img_bytes)
-
-                if allowed_formats and fmt.lower() not in allowed_formats:
-                    raise ValueError(
-                        f"Image at index {idx} has unsupported format: {fmt}"
-                    )
-                formats.append(fmt)
-            except Exception as e:
-                raise ValueError(f"Invalid image at index {idx}: {e}") from e
-        return formats
 
     def _validate_path(self, path: str | Path) -> Path:
         path = Path(path)
