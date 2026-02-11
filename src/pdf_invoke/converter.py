@@ -61,6 +61,7 @@ class PDFImageConverter:
         output_path = self._validate_path(output_path)
         data = self.pdf_to_images(pdf)
         for i, b in enumerate(data, start=start):
+    
             out = output_path / f"{pdf_name}_page_{i}.{ext}"
             out.write_bytes(b)
         return output_path.as_posix()
@@ -75,8 +76,8 @@ class PDFImageConverter:
         output_path = self._validate_path(output_path)
         pdf_path = output_path / pdf_name
 
-        if pdf_path.suffix.lower() != ".png":
-            pdf_path = pdf_path.with_suffix(".png")
+        if pdf_path.suffix.lower() != ".pdf":
+            pdf_path = pdf_path.with_suffix(".pdf")
 
         pdf_bytes = self.images_to_pdf(images)
 
@@ -89,11 +90,11 @@ class PDFImageConverter:
         name: str | None = None,
     ) -> str:
 
-        if isinstance(pdf, (str, Path)):
-            return Path(pdf).stem
-
         if name is not None:
             return name
+
+        if isinstance(pdf, (str, Path)):
+            return Path(pdf).stem
 
         raise ValueError(
             "Unable to determine PDF name. "

@@ -5,11 +5,9 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel
 
 from pdf_invoke.converter import PDFImageConverter
-from pdf_invoke.types import PDFInput
+from pdf_invoke.types import PDFInput, ALLOWED_MIME
 from pdf_invoke.utils import validate_image_bytes
 
-
-ALLOWED_MIME = Literal["image/jpeg", "image/png"]
 
 class BaseOutput(BaseModel):
     data: str
