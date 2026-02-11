@@ -74,9 +74,9 @@ class MultiModalLLM:
             chain = self.llm.with_structured_output(
                 schema=output_model,
             )
-            return chain.ainvoke([message])
+            return await chain.ainvoke([message])
         else:
-            return self.llm.ainvoke([message])
+            return await self.llm.ainvoke([message])
 
     def prepare_payload(self, data: Sequence[bytes], mime: ALLOWED_MIME = "image/png"):
         try:

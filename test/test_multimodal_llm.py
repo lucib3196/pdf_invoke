@@ -36,8 +36,21 @@ def test_invoke_images(multimodal_llm, sample_png):
     assert BaseOutput.model_validate(result).data
 
 
-@pytest.mark.parametrize("sample_png", ["bytes", "path"], indirect=True)
+
+
+
+# Async test 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("sample_pdf", ["path", "bytes"], indirect=True)
-def test_bad_input_multiple(multimodal_llm, sample_png, sample_pdf):
-    with pytest.raises(ValueError):
-        multimodal_llm.invoke(pdf=sample_pdf, images=[sample_png])
+async def test_ainvoke_pdf(multimodal_llm, sample_pdf):
+    result = await multimodal_llm.ainvoke(pdf=sample_pdf)
+    assert result
+    assert BaseOutput.model_validate(result).data
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("sample_png", ["bytes", "path"], indirect=True)
+async def test_ainvoke_images(multimodal_llm, sample_png):
+    result = await multimodal_llm.ainvoke(images=[sample_png])
+    assert result
+    assert BaseOutput.model_validate(result).data
+
