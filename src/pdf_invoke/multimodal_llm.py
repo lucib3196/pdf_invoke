@@ -19,13 +19,10 @@ class MultiModalLLM:
         *,
         prompt: str,
         model: BaseChatModel,
-        pdf: PDFInput | None = None,
-        images: Sequence[ImageInput] | None = None,
     ):
         # Base configuration
         self.prompt = prompt
         self.llm = model
-        self.image_bytes = self._validate_input(pdf, images)
 
     def _validate_input(
         self,
@@ -48,11 +45,14 @@ class MultiModalLLM:
 
     def invoke(
         self,
+        pdf: PDFInput | None = None,
+        images: Sequence[ImageInput] | None = None,
         output_model: Optional[Type[BaseModel]] = BaseOutput,
         mime: ALLOWED_MIME = "image/png",
     ):
+        image_bytes = self._validate_input(pdf, images)
         try:
-            message = self.prepare_payload(mime)
+            message = self.prepare_payload(image_bytes, mime)
             if output_model:
                 chain = self.llm.with_structured_output(schema=output_model)
                 return chain.invoke([message])
@@ -63,10 +63,13 @@ class MultiModalLLM:
 
     async def ainvoke(
         self,
+        pdf: PDFInput | None = None,
+        images: Sequence[ImageInput] | None = None,
         output_model: Optional[Type[BaseModel]] = BaseOutput,
         mime: ALLOWED_MIME = "image/png",
     ):
-        message = self.prepare_payload(mime)
+        image_bytes = self._validate_input(pdf, images)
+        message = self.prepare_payload(image_bytes, mime)
         if output_model:
             chain = self.llm.with_structured_output(
                 schema=output_model,
@@ -75,9 +78,9 @@ class MultiModalLLM:
         else:
             return self.llm.ainvoke([message])
 
-    def prepare_payload(self, mime: ALLOWED_MIME = "image/png"):
+    def prepare_payload(self, data: Sequence[bytes], mime: ALLOWED_MIME = "image/png"):
         try:
-            image_payload = self.prepare_image_payload(self.image_bytes, mime=mime)
+            image_payload = self.prepare_image_payload(data, mime=mime)
             message = {
                 "role": "user",
                 "content": [{"type": "text", "text": self.prompt}, *image_payload],
@@ -92,7 +95,7 @@ class MultiModalLLM:
         mime: ALLOWED_MIME = "image/png",
     ):
         allowed_format = mime.split("/")[-1]
-        validate_image_bytes(payload, allowed_formats=set(allowed_format))
+        validate_image_bytes(payload, allowed_formats=set([allowed_format]))
         return [
             {
                 "type": "image_url",
