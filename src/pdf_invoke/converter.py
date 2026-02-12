@@ -30,7 +30,7 @@ class PDFImageConverter:
     """
 
     def pdf_to_images(
-        self, pdf: PDFInput, zoom: float = 0.2, ext: ImageExt = "png"
+        self, pdf: PDFInput, zoom: float = 2, ext: ImageExt = "png"
     ) -> List[bytes]:
         """
         Convert a PDF document into a list of image byte representations.
@@ -40,7 +40,7 @@ class PDFImageConverter:
         pdf : PDFInput
             Either a filesystem path (str | Path) or raw PDF bytes.
         zoom : float, optional
-            Rendering scale factor applied to each page (default is 0.2).
+            Rendering scale factor applied to each page (default is 2).
         ext : ImageExt, optional
             Output image format (e.g., "png", "jpeg").
 
